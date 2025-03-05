@@ -1,4 +1,119 @@
-
 @import "tailwindcss";
 
 
+*,
+::before,
+::after {
+	box-sizing: border-box;
+}
+
+/* boards */
+
+.board-wrapper {
+	container-type: inline-size;
+}
+
+@property --board-width {
+	syntax: "<length>";
+	initial-value: 0px;
+	inherits: true;
+}
+
+.board {
+	--board-width: 100cqw;
+
+	& img,
+	& video {
+		display: block;
+	}
+}
+
+.masonry-board {
+	--row-min-height: 200px;
+	--row-max-height: 400px;
+	--gap: 10px;
+
+	--img-min-ratio: 1/2;
+	--img-max-ratio: 5/2;
+
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	align-items: start;
+	gap: var(--gap);
+
+	/* 
+	this method reduce the row max-height to the possible maximum.
+	why? I don't like that the last row expands when there are few images.
+	how it works? the row have the max possible height when the flex-box freeSpace is max,
+	then i can subtract freeSpace to w to calculate the max row height,
+	freeSpace=(hMin*rMax + gap), works with w between (hMin*rMin + freeSpace, inf).
+	*/
+	--a-board-width: tan(atan2(var(--board-width), 1px));
+	--a-row-min-height: tan(atan2(var(--row-min-height), 1px));
+	--a-gap: tan(atan2(var(--gap), 1px));
+
+	--a-card-min-width: calc(var(--a-row-min-height) * var(--img-min-ratio));
+	--a-card-max-width: calc(var(--a-row-min-height) * var(--img-max-ratio));
+	--a-free-max-width: calc(var(--a-card-max-width) + var(--a-gap));
+
+	--a-gaps-max-width: max(0, var(--a-gap) * ((var(--a-board-width) - var(--a-free-max-width) + var(--a-gap)) / (var(--a-card-min-width) + var(--a-gap)) - 1));
+
+	--a-board-width-bounded: max(var(--a-board-width) - var(--a-gaps-max-width), var(--a-card-min-width) + var(--a-free-max-width));
+	--full-row-min-ratio: calc((var(--a-board-width-bounded) - var(--a-free-max-width)) / var(--a-row-min-height));
+	--full-row-max-height: calc(1px * var(--a-board-width-bounded) / var(--full-row-min-ratio));
+
+	/* debug */
+	/* position: relative;
+
+	&::after {
+		--a-row-max-height: tan(atan2(var(--row-max-height), 1px));
+		--a-full-row-max-height: tan(atan2(var(--full-row-max-height), 1px));
+		--a-max-height: min(var(--a-row-max-height), var(--a-full-row-max-height));
+
+		counter-reset: bw var(--a-board-width) mh var(--a-max-height);
+		content: "debug: width=" counter(bw)"px rowMaxHeight=" counter(mh)"px";
+		position: absolute;
+		right: 0;
+		top: 0;
+		background-color: black;
+		color: lime;
+		z-index: 100;
+	} */
+
+	.card {
+		/* default */
+		--card-extra-height: 0px;
+
+		--_img-ratio: min(max(var(--img-ratio), var(--img-min-ratio)), var(--img-max-ratio));
+		/* flex-grow >= 1 */
+		flex-grow: calc(1/(var(--img-min-ratio)) * var(--_img-ratio));
+		flex-shrink: 1;
+		flex-basis: calc((var(--row-min-height) - var(--card-extra-height)) * (var(--_img-ratio)));
+		min-width: 0;
+		max-width: calc((min(var(--row-max-height), var(--full-row-max-height)) - var(--card-extra-height)) * var(--_img-ratio));
+	}
+}
+
+/* fixed row height */
+.masonry-board.fixed-size .card {
+	flex-grow: 0;
+	max-width: unset;
+}
+
+/* cards */
+
+.card {
+	position: relative;
+}
+
+/* image-card */
+
+.image-card img {
+	width: 100%;
+	height: auto;
+	aspect-ratio: var(--_img-ratio);
+
+	object-fit: cover;
+	object-position: left top;
+}
