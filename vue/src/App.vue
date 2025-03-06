@@ -17,6 +17,9 @@ const router = useRouter();
 const routes = useRouter().options.routes;
 const currentRoute = useRouter().currentRoute;
 
+const store = useStore();
+const user = computed(() => store.state.user.data);
+
 const capitalize = (str) => {
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -24,17 +27,18 @@ const capitalize = (str) => {
 
 console.log("currentRoute", currentRoute);
 
-const store = useStore();
-
-const user = computed(() => store.state.user.data);
-
 console.log("user: ", user);
 
 const logout = () => {
-    store.commit("logout");
-    router.push({
-        name: "login",
-    });
+    console.log("store: ", store);
+    store
+        .dispatch("logout")
+        .then(() => {
+            router.push({ name: "login" });
+        })
+        .catch((error) => {
+            console.error("Logout failed:", error);
+        });
 };
 </script>
 
@@ -102,11 +106,7 @@ const logout = () => {
                             >
                                 <span class="absolute -inset-1.5" />
                                 <span class="sr-only">Open user menu</span>
-                                <img
-                                    class="size-8 rounded-full"
-                                    :src="user.imageUrl"
-                                    alt=""
-                                />
+                                <img class="size-8 rounded-full" alt="" />
                             </MenuButton>
                         </div>
                         <transition
