@@ -2,6 +2,7 @@ import { createWebHistory, createRouter } from 'vue-router'
 import Login from "@/views/Login.vue";
 import Register from "@/views/Register.vue";
 import Dashboard from "@/views/Dashboard.vue";
+import store from '@/store';
 
 const routes = [
     {
@@ -19,6 +20,7 @@ const routes = [
     {
         path: "/dashboard",
         name: "dashboard",
+        meta: {requiresAuth: true},
         component: Dashboard
     }
 ]
@@ -26,6 +28,18 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to, from, next) =>{
+    console.log("to: ", to.name, "from: ", from.name, "next: ", next.name, "store: ", store.state.user.token)
+    if (to.meta.requiresAuth && !store.state.user.token){
+        next({name:"login"})
+    }else if (store.state.user.token && (to.name ==="login" || to.name === "register")){
+        next ({name: "dashboard"});
+    }
+    else{
+        next();
+    }
 })
 
 export default router;
